@@ -1,17 +1,15 @@
 import streamlit as st
 from streamlit_chat import message as st_message
-from transformers import BlenderbotTokenizer
-from transformers import BlenderbotForConditionalGeneration 
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 
 @st.experimental_singleton
 def get_models():
-    # it may be necessary for other frameworks to cache the model
-    # seems pytorch keeps an internal state of the conversation
-    model_name = "microsoft/DialoGPT-small"
-    tokenizer = AutoTokenizer.from_pretrained("microsoft/DialoGPT-small")
-    model = AutoModelForCausalLM.from_pretrained("microsoft/DialoGPT-small")
+    # Load the model and the tokenizer
+    tokenizer = AutoTokenizer.from_pretrained("facebook/blenderbot_small-90M")
+
+    model = AutoModelForSeq2SeqLM.from_pretrained(
+        "facebook/blenderbot_small-90M")
 
     return tokenizer, model
 
@@ -19,7 +17,7 @@ def get_models():
 if "history" not in st.session_state:
     st.session_state.history = []
 
-st.title("Hello Chatbot")
+st.title("Blenderbot")
 
 
 def generate_answer():
@@ -29,13 +27,14 @@ def generate_answer():
     result = model.generate(**inputs)
     message_bot = tokenizer.decode(
         result[0], skip_special_tokens=True
-    )  # .replace("<s>", "").replace("</s>", "")
+    )   # decode the result to a string
 
     st.session_state.history.append({"message": user_message, "is_user": True})
     st.session_state.history.append({"message": message_bot, "is_user": False})
 
 
-st.text_input("Talk to the bot", key="input_text", on_change=generate_answer)
+st.text_input("Tap to chat with the bot",
+              key="input_text", on_change=generate_answer)
 
 for chat in st.session_state.history:
     st_message(**chat)  # unpacking
